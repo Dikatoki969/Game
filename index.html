@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Maze Jumpscare Game</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        background: linear-gradient(red, white);
+        font-family: Arial, sans-serif;
+        user-select: none;
+    }
+
+    #gameContainer {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    #maze {
+        background: #eee;
+        border: 8px solid black;
+        width: 350px;
+        height: 550px;
+        position: relative;
+        box-shadow: 0 0 20px black;
+    }
+
+    #player {
+        width: 20px;
+        height: 20px;
+        background: blue;
+        border-radius: 50%;
+        position: absolute;
+        left: 20px;
+        top: 20px;
+        z-index: 10;
+    }
+
+    /* Maze Lines */
+    .wall {
+        position: absolute;
+        background: black;
+    }
+
+    #jumpscare {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: black;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 99999;
+    }
+
+    #jumpscare img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    /* TOUCH CONTROLS */
+    #controls {
+        position: fixed;
+        bottom: 20px;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+    }
+
+    .btn {
+        width: 70px;
+        height: 70px;
+        background: rgba(0,0,0,0.5);
+        border-radius: 10px;
+        color: white;
+        font-size: 30px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: 2px solid white;
+    }
+
+</style>
+</head>
+<body>
+
+<div id="gameContainer">
+    <div id="maze">
+
+        <div id="player"></div>
+
+        <!-- WALLS -->
+        <div class="wall" style="top:80px; left:0; width:300px; height:10px;"></div>
+        <div class="wall" style="top:160px; right:0; width:300px; height:10px;"></div>
+        <div class="wall" style="top:240px; left:0; width:300px; height:10px;"></div>
+        <div class="wall" style="top:320px; right:0; width:300px; height:10px;"></div>
+        <div class="wall" style="top:400px; left:0; width:300px; height:10px;"></div>
+    </div>
+</div>
+
+<!-- JUMPSCARE SCREEN -->
+<div id="jumpscare">
+    <img id="scareImg" src="">
+</div>
+
+<!-- LOUD SCREAM -->
+<audio id="scream" src="scream.mp3"></audio>
+
+<!-- MOBILE TOUCH CONTROLS -->
+<div id="controls">
+    <div class="btn" data-dir="left">◀</div>
+    <div class="btn" data-dir="up">▲</div>
+    <div class="btn" data-dir="down">▼</div>
+    <div class="btn" data-dir="right">▶</div>
+</div>
+
+<script>
+const player = document.getElementById("player");
+const maze = document.getElementById("maze");
+const walls = document.querySelectorAll(".wall");
+const jumpscare = document.getElementById("jumpscare");
+const scareImg = document.getElementById("scareImg");
+const scream = document.getElementById("scream");
+
+let px = 20, py = 20;
+let speed = 4;
+
+// LIST OF JUMPSCARE IMAGES  
+const scareImages = [
+    "img/shrek.png",        // Foto pertama
+    "img/bocah.png",        // Foto kedua
+    "img/bahlil.png"        // Foto ketiga
+];
+
+// CHECK COLLISION OUTSIDE MAZE LINES
+function checkCollision() {
+    const pRect = player.getBoundingClientRect();
+
+    for (let w of walls) {
+        const r = w.getBoundingClientRect();
+        if (pRect.right > r.left &&
+            pRect.left < r.right &&
+            pRect.bottom > r.top &&
+            pRect.top < r.bottom) {
+
+            return false;
+        }
+    }
+
+    // If not touching any wall → out of maze → jumpscare!
+    return true;
+}
+
+function triggerJumpscare() {
+    let randomImg = scareImages[Math.floor(Math.random() * scareImages.length)];
+    scareImg.src = randomImg;
+    jumpscare.style.display = "flex";
+    scream.volume = 1.0;
+    scream.play();
+
+    setTimeout(() => {
+        location.reload();
+    }, 2500);
+}
+
+// MOVEMENT 
+function move(dx, dy) {
+    px += dx;
+    py += dy;
+
+    player.style.left = px + "px";
+    player.style.top = py + "px";
+
+    if (checkCollision()) {
+        triggerJumpscare();
+    }
+}
+
+// KEYBOARD CONTROLS
+document.addEventListener("keydown", e => {
+    if (e.key === "ArrowUp") move(0, -speed);
+    if (e.key === "ArrowDown") move(0, speed);
+    if (e.key === "ArrowLeft") move(-speed, 0);
+    if (e.key === "ArrowRight") move(speed, 0);
+});
+
+// MOBILE CONTROLS
+document.querySelectorAll(".btn").forEach(btn => {
+    btn.addEventListener("touchstart", () => {
+        let dir = btn.dataset.dir;
+        if (dir === "up") move(0, -speed);
+        if (dir === "down") move(0, speed);
+        if (dir === "left") move(-speed, 0);
+        if (dir === "right") move(speed, 0);
+    });
+});
+</script>
+
+</body>
+  </html>
